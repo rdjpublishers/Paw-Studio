@@ -235,10 +235,9 @@
   .topbar{
     position:sticky;top:0;z-index:50;
     height:var(--topbar-h);
-    background:color-mix(in srgb, var(--bg) 85%, transparent);
-    backdrop-filter:blur(16px) saturate(180%);
-    -webkit-backdrop-filter:blur(16px) saturate(180%);
+    background:var(--bg);
     border-bottom:1px solid var(--border);
+    box-shadow:0 1px 0 var(--border), 0 4px 16px rgba(0,0,0,0.04);
     display:flex;align-items:center;
   }
   .topbar-inner{
@@ -668,6 +667,46 @@
     color:var(--accent);
   }
 
+  /* Tile style toggle (Image / Text) — sits right under the frame toggle */
+  .tile-toggle{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .tile-toggle-label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-muted);
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+  .seg-control{
+    display:inline-flex;
+    background:var(--surface-2);
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
+    padding:3px;
+    gap:2px;
+  }
+  .seg-btn{
+    background:transparent;
+    border:0;
+    color:var(--text-muted);
+    padding:7px 14px;
+    border-radius:7px;
+    cursor:pointer;
+    font-family:var(--font-body);
+    font-size:12.5px;
+    font-weight:600;
+    transition:all var(--t) var(--ease);
+  }
+  .seg-btn:hover{color:var(--text);}
+  .seg-btn.active{
+    background:var(--surface);
+    color:var(--accent);
+    box-shadow:var(--shadow-xs), 0 0 0 1px var(--border);
+  }
+
   .design-grid{
     display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
   }
@@ -805,16 +844,16 @@
       linear-gradient(-45deg, transparent 75%, var(--surface-2) 75%);
     background-size:20px 20px;
     background-position:0 0, 0 10px, 10px -10px, -10px 0px;
-    padding:40px 32px 32px;
+    padding:clamp(16px, 3vw, 32px);
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    min-height:480px;
     position:relative;
   }
   .preview-stage.flush{background:var(--surface-2);}
 
   .canvas-frame{
     position:relative;
-    width:min(100%, 320px);
+    width:100%;
+    max-width:min(100%, 560px);
     margin:0 auto;
     border-radius:18px;
     overflow:hidden;
@@ -846,8 +885,10 @@
   }
   .preview-empty.hidden{opacity:0;pointer-events:none;}
   .preview-empty:not(.hidden){opacity:1;}
-  /* when the empty state is visible, dim the canvas frame behind it */
-  .preview-stage:not(.has-frame) .canvas-frame{opacity:0.08;transform:scale(0.92);transition:all var(--t) var(--ease);}
+  /* when there's no name, fully hide the canvas placeholder so only the
+     empty-state message shows — no clash between the cat/dog tile ghost
+     and the empty illustration. */
+  .preview-stage:not(.has-frame) .canvas-frame{opacity:0;transform:scale(0.96);transition:all var(--t) var(--ease);pointer-events:none;}
   .preview-stage.has-frame .canvas-frame{opacity:1;transform:scale(1);transition:all var(--t) var(--ease);}
   .empty-illustration{
     width:120px;height:160px;
@@ -874,6 +915,13 @@
   .preview-foot{
     padding:16px 24px 20px;
     border-top:1px solid var(--border);
+    transition:padding var(--t) var(--ease), border-color var(--t) var(--ease);
+  }
+  /* when there's no name, hide the bottom note — the empty state already
+     carries that message, so showing both stacks them on top of each other
+     and clutters the mobile view. */
+  .preview-stage:not(.has-frame) ~ .preview-foot{padding:0;border-top-color:transparent;overflow:hidden;}
+  .preview-stage:not(.has-frame) ~ .preview-foot .preview-note{opacity:0;pointer-events:none;}
     background:var(--surface);
     text-align:center;
   }
@@ -892,143 +940,6 @@
     font-size:11.5px;
     font-family:'SF Mono', Monaco, monospace;
   }
-
-  /* ============================================================
-     EXAMPLE DESIGNS GALLERY
-     ============================================================ */
-  .examples{
-    padding:80px 0 64px;
-  }
-  .examples-head{
-    text-align:center;
-    margin-bottom:40px;
-  }
-  .examples-head h2{
-    font-family:var(--font-display);
-    font-size:clamp(28px, 3.4vw, 40px);
-    font-weight:600;
-    letter-spacing:-0.02em;
-    color:var(--text);
-    margin:0 0 12px;
-  }
-  .examples-head p{
-    font-size:15px;
-    color:var(--text-muted);
-    max-width:540px;
-    margin:0 auto;
-    line-height:1.6;
-  }
-  .examples-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:20px;
-  }
-  @media (max-width:880px){
-    .examples-grid{grid-template-columns:repeat(2, 1fr);}
-  }
-  @media (max-width:520px){
-    .examples-grid{grid-template-columns:1fr;}
-  }
-  .example-card{
-    background:var(--surface);
-    border:1px solid var(--border);
-    border-radius:var(--radius-lg);
-    padding:14px;
-    cursor:pointer;
-    text-align:left;
-    transition:all var(--t) var(--ease);
-    box-shadow:var(--shadow-sm);
-    font-family:inherit;
-  }
-  .example-card:hover{
-    transform:translateY(-3px);
-    box-shadow:var(--shadow-md);
-    border-color:var(--border-strong);
-  }
-  .example-art{
-    position:relative;
-    aspect-ratio:4/3;
-    background:#0a0a0a;
-    border-radius:var(--radius);
-    overflow:hidden;
-    display:flex;flex-direction:column;justify-content:flex-end;
-    padding:18px 18px 20px;
-    color:#fff;
-  }
-  .example-art[data-theme="Cat"]{background:linear-gradient(160deg, #1a0e08 0%, #0a0a0a 100%);}
-  .example-art[data-theme="Dog"]{background:linear-gradient(160deg, #0c1410 0%, #0a0a0a 100%);}
-  .example-art[data-theme="Animals"]{background:linear-gradient(160deg, #100a18 0%, #0a0a0a 100%);}
-  .art-tiles{
-    position:absolute;
-    top:0;left:0;right:0;bottom:42%;
-    display:flex;align-items:center;justify-content:center;
-    gap:4px;
-    padding:12px;
-    flex-wrap:wrap;
-    align-content:center;
-  }
-  .art-tiles span{
-    flex:0 0 auto;
-    width:14%;aspect-ratio:9/16;
-    border-radius:3px;
-    display:flex;align-items:center;justify-content:center;
-    font-family:var(--font-serif);
-    font-weight:600;
-    font-size:clamp(11px, 1.4vw, 16px);
-    color:rgba(255,255,255,0.95);
-    text-shadow:0 1px 2px rgba(0,0,0,0.4);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.1);
-  }
-  .example-art[data-theme="Cat"] .art-tiles span{
-    background:linear-gradient(160deg, rgba(232,164,101,0.85) 0%, rgba(200,118,58,0.9) 100%);
-    opacity:var(--o, 1);
-  }
-  .example-art[data-theme="Dog"] .art-tiles span{
-    background:linear-gradient(160deg, rgba(127,160,136,0.85) 0%, rgba(92,122,99,0.9) 100%);
-    opacity:var(--o, 1);
-  }
-  .example-art[data-theme="Animals"] .art-tiles span{
-    background:linear-gradient(160deg, rgba(168,144,208,0.85) 0%, rgba(139,109,181,0.9) 100%);
-    opacity:var(--o, 1);
-  }
-  .art-rule{
-    height:1px;
-    background:rgba(255,255,255,0.25);
-    margin:0 0 12px;
-    border-radius:1px;
-  }
-  .art-caption{
-    font-family:var(--font-head);
-    font-size:clamp(11px, 1.2vw, 14px);
-    font-weight:700;
-    letter-spacing:0.18em;
-    color:#fff;
-    text-align:left;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .example-meta{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:10px 4px 4px;
-  }
-  .example-name{
-    font-family:var(--font-display);
-    font-weight:600;
-    font-size:15px;
-    color:var(--text);
-    letter-spacing:-0.01em;
-  }
-  .example-pill{
-    font-size:11px;
-    font-weight:600;
-    padding:3px 10px;
-    border-radius:999px;
-    color:#fff;
-  }
-  .example-pill[data-theme="Cat"]{background:var(--cat);}
-  .example-pill[data-theme="Dog"]{background:var(--dog);}
-  .example-pill[data-theme="Animals"]{background:var(--animals);}
 
   /* ============================================================
      FEATURES STRIP
@@ -1425,6 +1336,13 @@
                 <button class="active" id="withFrameBtn" type="button">With Frame</button>
                 <button id="withoutFrameBtn" type="button">No Frame</button>
               </div>
+              <div class="tile-toggle" role="group" aria-label="Tile style">
+                <span class="tile-toggle-label">Tiles</span>
+                <div class="seg-control">
+                  <button class="seg-btn active" id="imageTileBtn" type="button">Image</button>
+                  <button class="seg-btn" id="textTileBtn" type="button">Text</button>
+                </div>
+              </div>
               <div class="design-grid" id="designGrid">
                 <button class="design-card" id="design1Btn" type="button" aria-label="Design 1 — Placard">
                   <div class="design-thumb">
@@ -1571,99 +1489,6 @@
           </div>
         </section>
 
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== EXAMPLE DESIGNS ===== -->
-  <section class="examples">
-    <div class="container">
-      <div class="examples-head">
-        <h2>Example designs</h2>
-        <p>Tap any card to load it into the studio. Like the NASA Landsat scene labels, but for the names you love.</p>
-      </div>
-      <div class="examples-grid">
-        <button class="example-card" data-name="Whiskers" data-theme="Cat" type="button">
-          <div class="example-art" data-theme="Cat">
-            <div class="art-tiles">
-              <span style="--o:.95">W</span><span style="--o:.7">H</span><span style="--o:.85">I</span><span style="--o:.6">S</span><span style="--o:.9">K</span>
-              <span style="--o:.75">E</span><span style="--o:.55">R</span><span style="--o:.8">S</span>
-            </div>
-            <div class="art-rule"></div>
-            <div class="art-caption">WHISKERS</div>
-          </div>
-          <div class="example-meta">
-            <span class="example-name">Whiskers</span>
-            <span class="example-pill" data-theme="Cat">Cat</span>
-          </div>
-        </button>
-        <button class="example-card" data-name="Buddy" data-theme="Dog" type="button">
-          <div class="example-art" data-theme="Dog">
-            <div class="art-tiles">
-              <span style="--o:.85">B</span><span style="--o:.65">U</span><span style="--o:.9">D</span><span style="--o:.7">D</span><span style="--o:.8">Y</span>
-            </div>
-            <div class="art-rule"></div>
-            <div class="art-caption">BUDDY</div>
-          </div>
-          <div class="example-meta">
-            <span class="example-name">Buddy</span>
-            <span class="example-pill" data-theme="Dog">Dog</span>
-          </div>
-        </button>
-        <button class="example-card" data-name="Luna Love" data-theme="Animals" type="button">
-          <div class="example-art" data-theme="Animals">
-            <div class="art-tiles">
-              <span style="--o:.9">L</span><span style="--o:.65">U</span><span style="--o:.8">N</span><span style="--o:.7">A</span>
-              <span style="--o:.55">L</span><span style="--o:.85">O</span><span style="--o:.7">V</span><span style="--o:.6">E</span>
-            </div>
-            <div class="art-rule"></div>
-            <div class="art-caption">LUNA LOVE</div>
-          </div>
-          <div class="example-meta">
-            <span class="example-name">Luna Love</span>
-            <span class="example-pill" data-theme="Animals">Animals</span>
-          </div>
-        </button>
-        <button class="example-card" data-name="Mochi" data-theme="Cat" type="button">
-          <div class="example-art" data-theme="Cat">
-            <div class="art-tiles">
-              <span style="--o:.95">M</span><span style="--o:.7">O</span><span style="--o:.85">C</span><span style="--o:.6">H</span><span style="--o:.8">I</span>
-            </div>
-            <div class="art-rule"></div>
-            <div class="art-caption">MOCHI</div>
-          </div>
-          <div class="example-meta">
-            <span class="example-name">Mochi</span>
-            <span class="example-pill" data-theme="Cat">Cat</span>
-          </div>
-        </button>
-        <button class="example-card" data-name="Coco Bean" data-theme="Dog" type="button">
-          <div class="example-art" data-theme="Dog">
-            <div class="art-tiles">
-              <span style="--o:.9">C</span><span style="--o:.65">O</span><span style="--o:.85">C</span><span style="--o:.6">O</span>
-              <span style="--o:.75">B</span><span style="--o:.55">E</span><span style="--o:.8">A</span><span style="--o:.7">N</span>
-            </div>
-            <div class="art-rule"></div>
-            <div class="art-caption">COCO BEAN</div>
-          </div>
-          <div class="example-meta">
-            <span class="example-name">Coco Bean</span>
-            <span class="example-pill" data-theme="Dog">Dog</span>
-          </div>
-        </button>
-        <button class="example-card" data-name="Raja" data-theme="Animals" type="button">
-          <div class="example-art" data-theme="Animals">
-            <div class="art-tiles">
-              <span style="--o:.9">R</span><span style="--o:.7">A</span><span style="--o:.85">J</span><span style="--o:.6">A</span>
-            </div>
-            <div class="art-rule"></div>
-            <div class="art-caption">RAJA</div>
-          </div>
-          <div class="example-meta">
-            <span class="example-name">Raja</span>
-            <span class="example-pill" data-theme="Animals">Animals</span>
-          </div>
-        </button>
       </div>
     </div>
   </section>
@@ -1831,7 +1656,8 @@
     bgImage: null,
     rawName: "",
     frameMode: "with",      // 'with' | 'without'
-    exportStyle: null       // null | 1 | 2 | 3  — Design 1/2/3 composite export styles
+    exportStyle: null,     // null | 1 | 2 | 3  — Design 1/2/3 composite export styles
+    tileMode: "image"       // 'image' | 'text' — what to render inside each tile
   };
 
   // ---------------------------------------------------------------
@@ -1886,6 +1712,8 @@
   const wordsReadout = $("wordsReadout");
   const withFrameBtn = $("withFrameBtn");
   const withoutFrameBtn = $("withoutFrameBtn");
+  const imageTileBtn = $("imageTileBtn");
+  const textTileBtn = $("textTileBtn");
   const canvasFrame = $("canvasFrame");
   const design1Btn = $("design1Btn");
   const design2Btn = $("design2Btn");
@@ -1918,32 +1746,6 @@
       if (window.innerWidth < 960) {
         document.querySelector(".tool-section").scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    });
-  });
-
-  // EXAMPLE CARDS (gallery under the tool) — load name + theme
-  // ---------------------------------------------------------------
-  document.querySelectorAll(".example-card").forEach(card => {
-    card.addEventListener("click", () => {
-      const name = card.dataset.name;
-      const theme = card.dataset.theme;
-      if (!name) return;
-      if (theme && THEME_NAMES.includes(theme)) {
-        document.querySelectorAll(".theme-card").forEach(b => {
-          b.classList.toggle("active", b.dataset.theme === theme);
-        });
-        state.theme = theme;
-        tileCache.clear();
-        nfTileCache.clear();
-      }
-      // reset to "With Frame" when picking from the gallery (so the
-      // user sees the full framed design, not a stuck design-style export)
-      setFrameMode("with");
-      nameInput.value = name;
-      onNameChanged();
-      nameInput.focus();
-      // smooth-scroll to the tool so the user sees their selection
-      document.querySelector(".tool-section").scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
 
@@ -2032,6 +1834,22 @@
   }
   withFrameBtn.addEventListener("click", () => setFrameMode("with"));
   withoutFrameBtn.addEventListener("click", () => setFrameMode("without"));
+
+  // ---------------------------------------------------------------
+  // TILE MODE TOGGLE — Image / Text
+  // Controls what is rendered inside each letter tile. "Image" uses the
+  // cat / dog / animal photo tile (loaded from assets or the procedural
+  // fallback). "Text" renders the letter itself on a themed gradient
+  // background — no image asset required.
+  // ---------------------------------------------------------------
+  function setTileMode(mode) {
+    state.tileMode = mode;
+    imageTileBtn.classList.toggle("active", mode === "image");
+    textTileBtn.classList.toggle("active", mode === "text");
+    scheduleRender();
+  }
+  imageTileBtn.addEventListener("click", () => setTileMode("image"));
+  textTileBtn.addEventListener("click", () => setTileMode("text"));
 
   // ---------------------------------------------------------------
   // EXPORT STYLE TOGGLE — Design 1 / Design 2 / Design 3
@@ -2289,6 +2107,41 @@
     g.moveTo(x1, y1); g.lineTo(x2, y2); g.lineTo(x3, y3);
     g.closePath();
     g.fill();
+  }
+
+  // Draws a single letter tile using the active theme color as a gradient
+  // background with the letter text on top — used when the user has the
+  // "Text" tile mode on (no image asset needed). Pass `flush`=true to
+  // render the tile edge-to-edge (no inset, no rounding), matching the
+  // no-frame / export grid look; pass false for the framed mode's
+  // rounded-with-inset tile.
+  function drawTextTile(letter, x, y, w, h, flush) {
+    const base = THEME_COLORS[state.theme] || "#c8763a";
+    const hi = THEME_COLORS_2[state.theme] || "#e0a465";
+
+    const grad = ctx.createLinearGradient(x, y, x, y + h);
+    grad.addColorStop(0, hi);
+    grad.addColorStop(1, base);
+    ctx.fillStyle = grad;
+    if (flush) {
+      ctx.fillRect(x, y, w, h);
+    } else {
+      const inset = Math.max(2, Math.min(w, h) * 0.025);
+      const r = Math.min(w, h) * 0.07;
+      roundRect(ctx, x + inset, y + inset, w - inset * 2, h - inset * 2, r);
+      ctx.fill();
+    }
+
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.96)";
+    const fs = Math.round(Math.min(w, h) * 0.58);
+    ctx.font = `700 ${fs}px 'Cormorant Garamond', serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 10;
+    ctx.fillText(letter.toUpperCase(), x + w / 2, y + h / 2 + fs * 0.04);
+    ctx.restore();
   }
 
   // Full-bleed tile loader for WITHOUT-FRAME mode. The framed-mode tiles
@@ -2648,10 +2501,14 @@
         ctx.fillStyle = "#000000";
         ctx.fillRect(x, y, W_tile, H_tile);
       } else {
-        const key = cell.ch.toUpperCase() + ":" + cell.pos;
-        const tile = tileMap.get(key);
-        if (tile && tile.el) {
-          ctx.drawImage(tile.el, x, y, W_tile, H_tile);
+        if (state.tileMode === "text") {
+          drawTextTile(cell.ch, x, y, W_tile, H_tile, true);
+        } else {
+          const key = cell.ch.toUpperCase() + ":" + cell.pos;
+          const tile = tileMap.get(key);
+          if (tile && tile.el) {
+            ctx.drawImage(tile.el, x, y, W_tile, H_tile);
+          }
         }
       }
       x += W_tile;
@@ -2876,7 +2733,7 @@
     let totalW = 0;
     chars.forEach(ch => { totalW += ctx.measureText(ch).width + spacing; });
     totalW -= spacing;
-    let x = cx - totalW / 1;
+    let x = cx - totalW / 2;
     ctx.fillStyle = color;
     chars.forEach(ch => {
       ctx.fillText(ch, x, y);
@@ -2969,10 +2826,14 @@
         x += W_tile * 0.5 + GH;
         return;
       }
-      const key = it.ch.toUpperCase() + ":" + it.pos;
-      const tile = tileMap.get(key);
-      if (tile && tile.el) {
-        ctx.drawImage(tile.el, x, y, W_tile, H_tile);
+      if (state.tileMode === "text") {
+        drawTextTile(it.ch, x, y, W_tile, H_tile, false);
+      } else {
+        const key = it.ch.toUpperCase() + ":" + it.pos;
+        const tile = tileMap.get(key);
+        if (tile && tile.el) {
+          ctx.drawImage(tile.el, x, y, W_tile, H_tile);
+        }
       }
       x += W_tile + GH;
     });
