@@ -2110,38 +2110,92 @@
   }
 
   // Draws a single letter tile using the active theme color as a gradient
-  // background with the letter text on top — used when the user has the
-  // "Text" tile mode on (no image asset needed). Pass `flush`=true to
-  // render the tile edge-to-edge (no inset, no rounding), matching the
-  // no-frame / export grid look; pass false for the framed mode's
-  // rounded-with-inset tile.
-  function drawTextTile(letter, x, y, w, h, flush) {
+  // background, the matching theme decoration (cat ears / dog ears / paw
+  // print) at the top, and the letter text centered on top — used when
+  // the user has the "Text" tile mode on (no image asset needed). This
+  // mirrors the procedural image-fallback tile so the two modes feel
+  // visually consistent. `pos` is the character position in the name,
+  // used the same way as `variant` in the fallback to vary ear size
+  // and seed between tiles.
+  function drawTextTile(letter, x, y, w, h, flush, pos = 0) {
     const base = THEME_COLORS[state.theme] || "#c8763a";
     const hi = THEME_COLORS_2[state.theme] || "#e0a465";
+    const variant = (pos | 0) % 5;
+    const seed = (letter.toUpperCase().charCodeAt(0) + variant * 17) % 360;
 
+    // Tile dimensions match the fallback's 450×800 reference, so we scale
+    // every decoration by the same ratio (this keeps the ear / paw
+    // proportions identical to the image-fallback at any tile size).
+    const REF_W = 450, REF_H = 800;
+    const sx = w / REF_W;
+    const sy = h / REF_H;
+
+    // 1. Gradient background
     const grad = ctx.createLinearGradient(x, y, x, y + h);
     grad.addColorStop(0, hi);
     grad.addColorStop(1, base);
     ctx.fillStyle = grad;
+    let inset = 0, r = 0;
     if (flush) {
       ctx.fillRect(x, y, w, h);
     } else {
-      const inset = Math.max(2, Math.min(w, h) * 0.025);
-      const r = Math.min(w, h) * 0.07;
+      inset = Math.max(2, Math.min(w, h) * 0.025);
+      r = Math.min(w, h) * 0.07;
       roundRect(ctx, x + inset, y + inset, w - inset * 2, h - inset * 2, r);
       ctx.fill();
     }
 
+    // 2. Theme decoration at the top — same shape the image fallback draws
+    //    (cat ears / dog ears / paw print), scaled to the tile size.
     ctx.save();
-    ctx.fillStyle = "rgba(255,255,255,0.96)";
-    const fs = Math.round(Math.min(w, h) * 0.58);
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = "#000";
+    const earSize = (70 + (variant * 6)) * sx;
+    if (state.theme === "Cat") {
+      const lY1 = y + 40 * sy;
+      const lY2 = y + (-20 + (seed % 15)) * sy;
+      triangle(ctx,
+        x + 60 * sx,            lY1,
+        x + 60 * sx + earSize * 0.5, lY2,
+        x + 60 * sx + earSize,  lY1);
+      triangle(ctx,
+        x + (w - 60 * sx),           lY1,
+        x + (w - 60 * sx) - earSize * 0.5, lY2,
+        x + (w - 60 * sx) - earSize, lY1);
+    } else if (state.theme === "Dog") {
+      ctx.beginPath();
+      ctx.ellipse(x + 70 * sx, y + 90 * sy, 46 * sx, 80 * sy, -0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + (w - 70 * sx), y + 90 * sy, 46 * sx, 80 * sy, 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      pawPrint(ctx, x + w / 2, y + 95 * sy, sx);
+    }
+    ctx.restore();
+
+    // 3. Centered letter with shadow — same font and position formula as
+    //    the image fallback (font sized to 0.62 of tile width, slight
+    //    downward nudge for visual centering with a tall tile).
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    const fs = Math.round(w * 0.62);
     ctx.font = `700 ${fs}px 'Cormorant Garamond', serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowColor = "rgba(0,0,0,0.35)";
     ctx.shadowBlur = 10;
-    ctx.fillText(letter.toUpperCase(), x + w / 2, y + h / 2 + fs * 0.04);
+    ctx.fillText(letter.toUpperCase(), x + w / 2, y + h / 2 + 10 * sy);
     ctx.restore();
+
+    // 4. Stroke border on the rounded rect (framed mode only) — matches
+    //    the white-translucent outline the image fallback uses.
+    if (!flush) {
+      ctx.strokeStyle = "rgba(255,255,255,0.5)";
+      ctx.lineWidth = Math.max(1, 2 * sx);
+      roundRect(ctx, x + inset, y + inset, w - inset * 2, h - inset * 2, r);
+      ctx.stroke();
+    }
   }
 
   // Full-bleed tile loader for WITHOUT-FRAME mode. The framed-mode tiles
@@ -2502,7 +2556,7 @@
         ctx.fillRect(x, y, W_tile, H_tile);
       } else {
         if (state.tileMode === "text") {
-          drawTextTile(cell.ch, x, y, W_tile, H_tile, true);
+          drawTextTile(cell.ch, x, y, W_tile, H_tile, true, cell.pos);
         } else {
           const key = cell.ch.toUpperCase() + ":" + cell.pos;
           const tile = tileMap.get(key);
@@ -2827,7 +2881,7 @@
         return;
       }
       if (state.tileMode === "text") {
-        drawTextTile(it.ch, x, y, W_tile, H_tile, false);
+        drawTextTile(it.ch, x, y, W_tile, H_tile, false, it.pos);
       } else {
         const key = it.ch.toUpperCase() + ":" + it.pos;
         const tile = tileMap.get(key);
